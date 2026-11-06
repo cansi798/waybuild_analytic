@@ -1,0 +1,100 @@
+Alle Rechte vorbehalten / All Rights Reserved
+=============================================
+
+Copyright © 2026 Waybuild UG (haftungsbeschränkt), Norderstedt.
+Alle Rechte vorbehalten.
+
+
+DEUTSCH (maßgebliche Fassung)
+-----------------------------
+
+1. Schutz der Inhalte
+   Der Quellcode, die Dokumentation, die Gestaltung, die Texte, die Grafiken
+   und alle sonstigen Inhalte dieses Repositorys sowie die daraus erzeugte
+   Software „Waybuild Analytics“ (Arbeitstitel) sind urheberrechtlich
+   geschützt und Geschäftsgeheimnisse der Waybuild UG (haftungsbeschränkt).
+
+2. Keine Nutzungsrechte ohne Zustimmung
+   Ohne vorherige schriftliche Zustimmung der Waybuild UG
+   (haftungsbeschränkt) ist jede Vervielfältigung, Verbreitung, Bearbeitung,
+   öffentliche Zugänglichmachung, Weitergabe, Vermietung, Bereitstellung als
+   Dienst für Dritte oder sonstige Nutzung untersagt – ganz oder in Teilen,
+   entgeltlich oder unentgeltlich. Das gilt auch für die Verwendung zum
+   Training von KI-Modellen. Eine Nutzung ist nur aufgrund eines
+   schriftlichen Vertrags mit der Waybuild UG (haftungsbeschränkt) und gegen
+   die darin vereinbarte Vergütung erlaubt.
+
+3. Nutzung als Dienst
+   Kunden der Waybuild UG (haftungsbeschränkt) erhalten keine Kopie der
+   Software. Sie nutzen ausschließlich die vertraglich vereinbarten
+   Leistungen (zum Beispiel Berichte oder einen Zugang) nach den jeweiligen
+   Vertragsbedingungen. Daraus entstehen keine Rechte am Quellcode.
+
+4. Einsicht über GitHub
+   Der Zugang zu diesem privaten Repository ist nur befugten Personen
+   gestattet. Ein Fork oder eine Kopie begründet keine Nutzungsrechte.
+
+5. Komponenten Dritter
+   Komponenten Dritter unterliegen ihren eigenen Lizenzen und sind nicht
+   Teil dieser Lizenz. Insbesondere:
+   - Matomo (https://matomo.org) wird als eigenständiges Programm
+     betrieben und steht unter der GNU General Public License, Version 3
+     oder später (GPL-3.0-or-later). Der Matomo-JavaScript-Tracker steht
+     unter der BSD-3-Clause-Lizenz. Matomo-Quellcode ist nicht Bestandteil
+     dieses Repositorys. „Matomo“ ist eine Marke ihres Inhabers; die
+     Waybuild UG (haftungsbeschränkt) steht in keiner Verbindung zum
+     Matomo-Projekt.
+   - Bibliotheken, Pakete und Schriften unterliegen den Lizenzen, die in den
+     jeweiligen Paketen bzw. in einer Datei THIRD-PARTY-NOTICES genannt
+     sind.
+   Sollten Teile dieses Repositorys einer Lizenz Dritter unterliegen, gilt
+   für diese Teile ausschließlich die jeweilige Lizenz Dritter.
+
+6. Lizenzanfragen
+   Anfragen zur Nutzung richten Sie bitte an: kontakt@waybuild.de
+
+
+ENGLISH (convenience translation – the German version prevails)
+-----------------------------------------------------------------
+
+1. Protection of content
+   The source code, documentation, design, texts, graphics and all other
+   content of this repository and the software "Waybuild Analytics"
+   (working title) built from it are protected by copyright and are trade
+   secrets of Waybuild UG (haftungsbeschränkt).
+
+2. No rights of use without permission
+   Without the prior written consent of Waybuild UG (haftungsbeschränkt),
+   any reproduction, distribution, modification, making available to the
+   public, transfer, rental, provision as a service to third parties or
+   other use – in whole or in part, paid or free of charge – is prohibited.
+   This also applies to use for training AI models. Use is permitted only
+   under a written contract with Waybuild UG (haftungsbeschränkt) and
+   against the fee agreed therein.
+
+3. Use as a service
+   Customers of Waybuild UG (haftungsbeschränkt) do not receive a copy of
+   the software. They only use the contractually agreed services (for
+   example reports or an account) under the respective contract terms.
+   This does not grant any rights to the source code.
+
+4. Access via GitHub
+   Access to this private repository is permitted for authorised persons
+   only. A fork or copy does not grant any rights of use.
+
+5. Third-party components
+   Third-party components are subject to their own licenses and are not
+   covered by this license. In particular:
+   - Matomo (https://matomo.org) is operated as a separate program and is
+     licensed under the GNU General Public License, version 3 or later
+     (GPL-3.0-or-later). The Matomo JavaScript tracker is licensed under
+     the BSD-3-Clause license. Matomo source code is not part of this
+     repository. "Matomo" is a trademark of its owner; Waybuild UG
+     (haftungsbeschränkt) is not affiliated with the Matomo project.
+   - Libraries, packages and fonts are subject to the licenses stated in
+     the respective packages or in a THIRD-PARTY-NOTICES file.
+   Where parts of this repository are subject to a third-party license,
+   only that third-party license applies to those parts.
+
+6. Licensing requests
+   Please send requests regarding use to: kontakt@waybuild.de
