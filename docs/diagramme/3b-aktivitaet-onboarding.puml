@@ -1,0 +1,55 @@
+@startuml aktivitaet-onboarding
+!include _stil.iuml
+title Aktivität: Neuen Kunden und Website onboarden
+
+start
+:Kunde anlegen
+(Paket, Firmennamen, Wettbewerber);
+:Website anlegen (Domain eingeben);
+if (Domain schon vorhanden?) then (ja)
+  :Meldung „Diese Domain gibt es schon.“;
+  stop
+else (nein)
+endif
+:In Matomo anlegen und Ziele einrichten
+(Anfrage, Buchen, Anruf, Mail, WhatsApp);
+if (Matomo erreichbar?) then (nein)
+  :Website bleibt „noch nicht in Matomo“,
+  später erneut;
+  stop
+else (ja)
+endif
+:Tracking-Code und Opt-out-Baustein ausgeben;
+:Datenschutzerklärung der Website anpassen;
+if (Can sagt „ja“ zum Einbau in die Live-Website?) then (nein)
+  :Warten, nichts einbauen;
+  stop
+else (ja)
+  :Code einbauen und veröffentlichen;
+endif
+if (Erste Besuche innerhalb von 24 Stunden?) then (nein)
+  :Einbau prüfen;
+else (ja)
+endif
+partition "KI-Crawler" {
+  if (Hoster liefert Server-Logs?) then (SFTP)
+    :Zugang hinterlegen,
+    täglicher Abruf;
+  elseif (nur Datei) then (Upload)
+    :Logs von Hand hochladen;
+  else (keine, z. B. GitHub Pages)
+    :Keine Crawler-Messung,
+    Hinweis in der App;
+  endif
+}
+if (Google Search Console vorhanden?) then (ja)
+  :Dienstkonto als Leser freigeben;
+else (nein)
+  :Abschnitt Suchbegriffe entfällt;
+endif
+:Test-Fragen für die Website anlegen
+(Vorschläge übernehmen, höchstens 30);
+:Erster KI-Check am 25.;
+:Erster Monatsbericht am 2. des Folgemonats;
+stop
+@enduml

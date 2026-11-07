@@ -1,0 +1,87 @@
+@startuml use-cases
+!include _stil.iuml
+title Waybuild Analytics – Use-Case-Diagramm (Stufe 1, Weg B)
+left to right direction
+skinparam packageStyle rectangle
+skinparam nodesep 18
+skinparam ranksep 70
+
+actor "Waybuild-Team\n(Can, Jamil)" as Team
+actor "Zeitplaner\n(Cron)" as Cron
+actor "Kunde\n(Zugang zunächst inaktiv)" as Kunde
+actor "Website-Besucher" as Besucher
+actor "KI-Crawler /\nKI-Assistent\n(liest Seiten)" as Crawler
+actor "MCP-Client\n(z. B. Claude)" as MCPC
+
+rectangle "Waybuild Analytics" {
+  package "Stammdaten" {
+    usecase "Kunde anlegen" as UC1
+    usecase "Website anlegen\n(mit Zielen)" as UC2
+    usecase "Tracking-Code\nausgeben" as UC3
+    usecase "Kunden-Zugang\naktivieren (später)" as UC17
+  }
+  package "Messung" {
+    usecase "Besuch messen\n(ohne Cookies)" as UC18
+    usecase "KI-Crawler-Logs\nimportieren" as UC11
+  }
+  package "Auswertung" {
+    usecase "Dashboard /\nKennzahlen ansehen" as UC4
+    usecase "Maßnahme im\nLogbuch eintragen" as UC5
+    usecase "Vorher-nachher\nansehen" as UC6
+    usecase "Export\n(CSV, XLSX, JSON)" as UC10
+  }
+  package "Berichte" {
+    usecase "Monatsbericht\nerzeugen" as UC7
+    usecase "Monatsbericht\nfreigeben" as UC8
+    usecase "Bericht versenden\n(von Hand, nach Cans Ja)" as UC9
+  }
+  package "KI-Sichtbarkeit" {
+    usecase "Test-Fragen\nje Website pflegen" as UC12
+    usecase "KI-Check\nje Website ausführen" as UC13
+    usecase "Begriffe\nauswerten" as UC14
+  }
+  package "Zugang für KI-Assistenten (MCP)" {
+    usecase "MCP-Token\nje Kunde verwalten" as UC16
+    usecase "Per MCP\nabfragen" as UC15
+  }
+}
+
+actor "Matomo\n(Datensammler)" as Matomo
+actor "KI-APIs\nOpenAI, Anthropic\n(Google, Perplexity ab V2)" as KIAPI
+actor "Google\nSearch Console" as GSC
+actor "Nextcloud\n(Ablage)" as NC
+
+Team --> UC1
+Team --> UC2
+Team --> UC3
+Team --> UC17
+Team --> UC11
+Team --> UC4
+Team --> UC5
+Team --> UC6
+Team --> UC10
+Team --> UC8
+Team --> UC9
+Team --> UC12
+Team --> UC13
+Team --> UC16
+Cron --> UC7
+Cron --> UC13
+Cron --> UC11
+Kunde --> UC4
+Besucher --> UC18
+Crawler --> UC11
+MCPC --> UC15
+
+UC13 ..> UC14 : <<include>>
+UC9 ..> UC8 : <<setzt voraus>>
+UC15 ..> UC16 : <<braucht Token>>
+
+UC2 --> Matomo
+UC18 --> Matomo
+UC4 --> Matomo
+UC13 --> KIAPI
+UC14 --> KIAPI
+UC7 --> GSC
+UC8 --> NC
+@enduml

@@ -1,0 +1,56 @@
+@startuml aktivitaet-monatsbericht
+!include _stil.iuml
+title Aktivität: Monatsbericht erstellen, freigeben, versenden
+
+start
+:Zeitplaner: 2. des Monats, 06:00;
+:Suchbegriffe aus der Search Console
+schon um 05:00 geholt;
+repeat :Nächste aktive Website;
+  :Kennzahlen, Logbuch, KI-Crawler,
+  KI-Check und Suchbegriffe holen;
+  if (Technischer Fehler?) then (ja)
+    :Status „Fehler“ mit Grund;
+    :Störungsmeldung in Talk;
+  else (nein)
+    if (Daten vollständig?) then (ja)
+      :PDF erzeugen,
+      Status „Entwurf“;
+    else (nein)
+      :PDF mit Band „Unvollständig“,
+      Status „unvollständig“;
+    endif
+  endif
+repeat while (Weitere Websites?) is (ja) not (nein)
+:Team prüft den Entwurf in der App
+und ergänzt „Vorschläge“;
+if (Bericht freigeben?) then (nein)
+  :Ändern oder neu erzeugen;
+  note right
+    Ein schon freigegebener
+    Bericht wird nie überschrieben.
+  end note
+  stop
+else (ja)
+  if (Status „unvollständig“?) then (ja)
+    :Ausdrücklich bestätigen
+    „trotz unvollständig“;
+  else (nein)
+  endif
+  :Status „freigegeben“;
+  :PDF nach Nextcloud in den Kundenordner;
+  if (Ablage geklappt?) then (nein)
+    :Bleibt „Entwurf“,
+    Meldung, später erneut;
+    stop
+  else (ja)
+  endif
+endif
+if (Can sagt „ja“ zum Versand?) then (ja)
+  :Bericht von Hand an den Kunden senden
+  (nicht automatisch);
+else (nein)
+  :Bleibt abgelegt, kein Versand;
+endif
+stop
+@enduml

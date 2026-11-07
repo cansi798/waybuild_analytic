@@ -1,0 +1,48 @@
+@startuml sequenz-mcp
+!include _stil.iuml
+title Sequenz c) Abfrage per MCP mit Token je Kunde
+autonumber "<b>0."
+
+actor "Nutzer" as N
+participant "KI-Assistent /\nMCP-Client\n(z. B. Claude)" as A
+box "Waybuild Analytics (eigene App)" #F4FBFB
+participant "MCP-Server\n/mcp" as S
+participant "Token-Prüfung\n+ Ratenlimit" as TP
+participant "Werkzeug\n(z. B. besucher_kennzahlen)" as WZ
+participant "Kennzahlen-\nBaustein" as K
+database "Postgres\n(RLS je Kunde)" as P
+end box
+participant "Matomo\nReporting-API" as R
+
+N -> A : „Wie lief Bauwelt im Oktober?“
+A -> S : Werkzeug-Aufruf\nAuthorization: Bearer wa_…
+S -> TP : Token prüfen (Hash, Ablauf,\nWiderruf, 60/Minute)
+alt ungültig / abgelaufen
+  TP --> S : abgelehnt
+  S --> A : 401
+else zu viele Aufrufe
+  S --> A : 429
+else gültig (Kunde X oder Team)
+  TP --> S : Kunde X, Rechte „lesen“
+  S -> WZ : Eingaben prüfen (Datum, IDs)
+  WZ -> P : im Kontext von Kunde X:\nWebsite gehört zu X?
+  alt fremde oder unbekannte Website
+    P --> WZ : 0 Zeilen
+    WZ --> S : „Nicht gefunden.“
+  else eigene Website
+    WZ -> K : holeKennzahlen(...)
+    K -> R : Berichte (Lese-Token, nur Server)
+    R --> K : JSON
+    K -> P : Ziele, Logbuch, KI-Check
+    K --> WZ : Kennzahlen
+    WZ --> S : { schema: wa.mcp.v1, daten: … }
+  end
+  S -> P : Aufruf protokollieren (ohne Eingabewerte)
+  S --> A : Antwort
+end
+A --> N : Antwort in eigenen Worten
+note over A, S
+  Texte in „daten“ (Seitentitel, KI-Antworten)
+  sind fremde Daten, keine Anweisungen.
+end note
+@enduml

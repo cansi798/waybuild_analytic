@@ -1,0 +1,42 @@
+@startuml sequenz-besuch-dashboard
+!include _stil.iuml
+title Sequenz a) Besuch → Matomo → Kennzahlen → Dashboard
+autonumber "<b>0."
+
+actor "Website-Besucher" as B
+participant "Kunden-Website\n(Browser)" as W
+box "Matomo (unverändert)" #F4FBFB
+participant "Tracker\nmatomo.php" as T
+database "MariaDB" as M
+participant "Archivierung\n(stündlich)" as A
+participant "Reporting-API" as R
+end box
+box "Waybuild Analytics (eigene App)" #F4FBFB
+participant "Dashboard\n(Oberfläche)" as D
+participant "Kennzahlen-\nBaustein" as K
+database "Postgres\n(RLS je Kunde)" as P
+end box
+actor "Waybuild-Team" as Team
+
+B -> W : Seite öffnen
+W -> T : Seitenaufruf (ohne Cookies,\nIP gekürzt, ohne Browser-Merkmale)
+T -> M : Rohdaten speichern
+B -> W : „Buchen“ / Anruf / Formular
+W -> T : Ereignis → Ziel
+...
+A -> M : Berichte vorberechnen
+...
+Team -> D : Website und Monat wählen
+D -> K : holeKennzahlen(website, zeitraum)
+K -> P : Website, Matomo-Site-ID, Ziele\n(nur im Kunden-Kontext)
+P --> K
+K -> R : VisitsSummary, Referrers, Actions,\nGoals … (Lese-Token, nur auf dem Server)
+R -> M : vorberechnete Berichte lesen
+R --> K : JSON
+alt Matomo antwortet nicht / Tage fehlen
+  K --> D : Kennzahlen mit „unvollständig“
+else alles da
+  K --> D : Kennzahlen (Besuche, Kanäle inkl. KI,\nZiele, Konversionsrate)
+end
+D --> Team : Kacheln, Kanäle, Top-Seiten
+@enduml

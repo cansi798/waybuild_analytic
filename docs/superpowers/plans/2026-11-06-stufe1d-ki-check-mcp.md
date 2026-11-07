@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Monatlicher AI-Visibility-Check mit festen Test-Fragen pro Kunde bei Claude und ChatGPT, Auswertung „genannt ja/nein, zitiert, Begriffe“, Budget-Wächter, Bericht-Abschnitt, dazu ein MCP-Server mit Token pro Kunde.
+**Goal:** Monatlicher AI-Visibility-Check mit festen Test-Fragen je Website (Can, 07.11., Talk #4882: „je Website getestet“, über die APIs der Anbieter) bei Claude und ChatGPT, Auswertung „genannt ja/nein, zitiert, Begriffe“, Budget-Wächter, Bericht-Abschnitt, dazu ein MCP-Server mit Token pro Kunde.
 
-**Architecture:** Anbieter-Adapter mit einem gemeinsamen Interface (`KiAnbieter`) plus Fake-Anbieter für Tests. Ein Lauf pro Kunde und Monat fragt jede aktive Frage 3-mal je Anbieter, speichert Antwort und Quellen, lässt sie von einem günstigen Modell mit festem Schema auswerten und rechnet Kennzahlen. Der MCP-Server (Streamable HTTP unter `/mcp`) ruft nur Funktionen des Kennzahlen-Bausteins innerhalb von `mitKunde`/`mitTeam` auf.
+**Architecture:** Anbieter-Adapter mit einem gemeinsamen Interface (`KiAnbieter`) plus Fake-Anbieter für Tests. Ein Lauf pro Website und Monat fragt jede aktive Frage 3-mal je Anbieter, speichert Antwort und Quellen, lässt sie von einem günstigen Modell mit festem Schema auswerten und rechnet Kennzahlen. Der MCP-Server (Streamable HTTP unter `/mcp`) ruft nur Funktionen des Kennzahlen-Bausteins innerhalb von `mitKunde`/`mitTeam` auf.
 
 **Tech Stack:** wie 1a–1c, dazu `@anthropic-ai/sdk`, `@modelcontextprotocol/sdk`, `zod` (exakte Versionen beim Installieren fest eintragen). OpenAI per `fetch` auf die Responses API (kein zusätzliches SDK).
 
@@ -48,7 +48,7 @@ src/lib/server/ki-check/lauf.ts         # starteLauf, setzeLaufFort
 src/lib/server/ki-check/kennzahlen.ts   # kiSichtbarkeit
 src/lib/server/fragen.ts                # Test-Fragen, Vorschläge
 src/lib/server/mcp/{token,server,werkzeuge}.ts
-src/routes/(team)/kunden/[id]/{fragen,ki-check,mcp-token}/…
+src/routes/(team)/websites/[id]/{fragen,ki-check}/…, src/routes/(team)/kunden/[id]/mcp-token/…
 src/routes/mcp/+server.ts
 scripts/ki-check-probe.ts
 docs/mcp-verbinden.md
@@ -56,20 +56,20 @@ docs/mcp-verbinden.md
 
 ---
 
-### Task 1: Test-Fragen pro Kunde
+### Task 1: Test-Fragen je Website
 
 **Files:**
-- Create: `db/migrations/009_ki_check.sql` (Teil Fragen), `src/lib/server/fragen.ts`, `src/routes/(team)/kunden/[id]/fragen/…`, `tests/unit/fragen.test.ts`, `tests/db/fragen.test.ts`
+- Create: `db/migrations/009_ki_check.sql` (Teil Fragen), `src/lib/server/fragen.ts`, `src/routes/(team)/websites/[id]/fragen/…`, `tests/unit/fragen.test.ts`, `tests/db/fragen.test.ts`
 
 **Interfaces:**
 - Produces:
-  - Tabelle `app.test_fragen(id uuid pk, kunde_id uuid not null, text text not null check (length(text) between 5 and 300), kategorie text check in ('marke','leistung_ort','vergleich'), aktiv boolean default true, angelegt_am timestamptz)`; Spalten an `app.kunden`: `firmennamen text[] not null default '{}'` (Schreibweisen), `ki_budget_cent int not null default 1000`, `wettbewerber text[] default '{}'`.
+  - Tabelle `app.test_fragen(id uuid pk, kunde_id uuid not null, website_id uuid not null references app.websites, text text not null check (length(text) between 5 and 300), kategorie text check in ('marke','leistung_ort','vergleich'), aktiv boolean default true, angelegt_am timestamptz)`; Spalten an `app.kunden`: `firmennamen text[] not null default '{}'` (Schreibweisen), `ki_budget_cent int not null default 1000`, `wettbewerber text[] default '{}'`.
   - `schlageFragenVor(e: { firma: string; branche: string; leistungen: string[]; orte: string[] }): string[]` – reine Vorlage (keine KI): je Leistung × Ort „Wer macht <Leistung> in <Ort>?“ und „Welche Firma empfiehlst du für <Leistung> in <Ort>?“, dazu „Was ist <Firma>?“ und „Ist <Firma> empfehlenswert?“; höchstens 30, ohne Dubletten.
-  - Höchstens 30 aktive Fragen pro Kunde (Meldung „Höchstens 30 aktive Fragen pro Kunde.“).
-- [ ] **Step 1: Failing tests:** 2 Leistungen × 2 Orte → 8 + 2 = 10 Vorschläge; 6 × 6 → genau 30; 31. aktive Frage → Fehler mit obiger Meldung; Kunde B sieht Fragen von A nicht.
+  - Höchstens 30 aktive Fragen je Website (Meldung „Höchstens 30 aktive Fragen je Website.“). Das Budget bleibt pro Kunde und Monat (alle Websites des Kunden zusammen).
+- [ ] **Step 1: Failing tests:** 2 Leistungen × 2 Orte → 8 + 2 = 10 Vorschläge; 6 × 6 → genau 30; 31. aktive Frage derselben Website → Fehler mit obiger Meldung, bei einer zweiten Website des Kunden erlaubt; Kunde B sieht Fragen von A nicht.
 - [ ] **Step 2:** FAIL → implementieren → PASS.
 - [ ] **Step 3:** Seite „Test-Fragen“: Firmennamen-Schreibweisen, Wettbewerber, Vorschläge übernehmen, Fragen an/aus.
-- [ ] **Step 4: Commit** „feat: Test-Fragen pro Kunde“.
+- [ ] **Step 4: Commit** „feat: Test-Fragen je Website“.
 
 ### Task 2: Anbieter-Interface, Fake, Preise, Budget
 
@@ -79,12 +79,12 @@ docs/mcp-verbinden.md
 
 **Interfaces:**
 - Produces:
-  - `type AnbieterId = 'anthropic' | 'openai' | 'fake'`; `class AnbieterFehler extends Error { art: 'abgelehnt' | 'zu_viele_anfragen' | 'zeitlimit' | 'serverfehler' | 'sonstiges' }`; `type Lauf = { id: string; kundeId: string; monat: string; status: 'laeuft' | 'fertig' | 'teilweise' | 'budget_erreicht' | 'fehler'; kostenCent: number }`.
+  - `type AnbieterId = 'anthropic' | 'openai' | 'fake'`; `class AnbieterFehler extends Error { art: 'abgelehnt' | 'zu_viele_anfragen' | 'zeitlimit' | 'serverfehler' | 'sonstiges' }`; `type Lauf = { id: string; kundeId: string; websiteId: string; monat: string; status: 'laeuft' | 'fertig' | 'teilweise' | 'budget_erreicht' | 'fehler'; kostenCent: number }`.
   - `type AnbieterAntwort = { text: string; quellen: { url: string; titel?: string }[]; modell: string; kostenUsd: number; roh: unknown }`.
   - `interface KiAnbieter { id: AnbieterId; aktiv(): boolean; frage(text: string, signal: AbortSignal): Promise<AnbieterAntwort>; geschaetzteKostenUsd(): number }`.
   - `class FakeAnbieter implements KiAnbieter` – liefert vorgegebene Antworten oder Fehler (`new FakeAnbieter({ antworten, fehlerBei?: number[] })`).
-  - Tabellen `app.check_laeufe(id uuid pk, kunde_id uuid not null, monat text, status text check in ('laeuft','fertig','teilweise','budget_erreicht','fehler'), kosten_cent int default 0, gestartet_am, beendet_am, unique (kunde_id, monat))`, `app.check_antworten(id uuid pk, kunde_id uuid not null, lauf_id uuid, frage_id uuid, anbieter text, wiederholung int check between 1 and 3, modell text, text text, quellen jsonb, kosten_cent int, fehler text, unique (lauf_id, frage_id, anbieter, wiederholung))`, beide mit RLS.
-  - `usdZuCent(usd: number): number` (aufrunden); `pruefeBudget(sql, kundeId, laufId, naechsteUsd: number): Promise<boolean>` – `true`, wenn `kosten_cent + usdZuCent(naechsteUsd) <= ki_budget_cent`; `bucheKosten(sql, laufId, cent)`.
+  - Tabellen `app.check_laeufe(id uuid pk, kunde_id uuid not null, website_id uuid not null, monat text, status text check in ('laeuft','fertig','teilweise','budget_erreicht','fehler'), kosten_cent int default 0, gestartet_am, beendet_am, unique (website_id, monat))`, `app.check_antworten(id uuid pk, kunde_id uuid not null, lauf_id uuid, frage_id uuid, anbieter text, wiederholung int check between 1 and 3, modell text, text text, quellen jsonb, kosten_cent int, fehler text, unique (lauf_id, frage_id, anbieter, wiederholung))`, beide mit RLS.
+  - `usdZuCent(usd: number): number` (aufrunden); `pruefeBudget(sql, kundeId, laufId, naechsteUsd: number): Promise<boolean>` – `true`, wenn (Summe `kosten_cent` aller Läufe des Kunden in diesem Monat) `+ usdZuCent(naechsteUsd) <= ki_budget_cent`; `bucheKosten(sql, laufId, cent)`.
 - [ ] **Step 1: Failing tests:** `usdZuCent(0.0101)` mit Kurs 0.90 → `1`; Budget 1000, verbraucht 995, nächste Abfrage 0.10 USD → `false`; verbraucht 900 → `true`; `FakeAnbieter` mit `fehlerBei: [2]` wirft beim 2. Aufruf.
 - [ ] **Step 2:** FAIL → implementieren → PASS. **Step 3: Commit** „feat: KI-Anbieter-Interface und Budget“.
 
@@ -129,17 +129,17 @@ docs/mcp-verbinden.md
 ### Task 6: Lauf, Zeitplan, Kennzahlen, Oberfläche, Bericht
 
 **Files:**
-- Create: `src/lib/server/ki-check/lauf.ts`, `src/lib/server/ki-check/kennzahlen.ts`, `scripts/ki-check-probe.ts`, `src/routes/(team)/kunden/[id]/ki-check/…`, `tests/db/ki-lauf.test.ts`, `tests/unit/ki-kennzahlen.test.ts`
+- Create: `src/lib/server/ki-check/lauf.ts`, `src/lib/server/ki-check/kennzahlen.ts`, `scripts/ki-check-probe.ts`, `src/routes/(team)/websites/[id]/ki-check/…`, `tests/db/ki-lauf.test.ts`, `tests/unit/ki-kennzahlen.test.ts`
 - Modify: `src/lib/server/jobs/zeitplan.ts`, `src/lib/server/bericht/daten.ts`, `src/lib/server/bericht/vorlage.ts`, `src/lib/server/kennzahlen/typen.ts` (Export `KiSichtbarkeit`)
 
 **Interfaces:**
 - Consumes: Tasks 1–5, `meldeStoerung`.
 - Produces:
-  - `starteLauf(sql, kundeId: string, monat: string, anbieter: KiAnbieter[]): Promise<Lauf>` – legt den Lauf an oder setzt ihn fort (nur fehlende Kombinationen aus Frage × Anbieter × Wiederholung); prüft vor jeder Abfrage das Budget; pro Abfrage 1 Wiederholung bei 429/5xx nach 30 s; Endstatus `fertig`, `teilweise` (mindestens eine Abfrage fehlgeschlagen), `budget_erreicht` oder `fehler` (keine einzige Antwort).
-  - Job `ki-check-monat` am 25. um 03:00 für alle aktiven Kunden mit mindestens einer aktiven Frage; danach `meldeStoerung` bei `teilweise`/`fehler`.
-  - `type KiSichtbarkeit = { monat: string; nennungsrate: Partial<Record<AnbieterId, number>>; gesamt: number | null; zitierrate: number | null; topBegriffe: { begriff: string; anzahl: number }[]; luecken: { frageId: string; text: string }[]; status: Lauf['status'] }`; `kiSichtbarkeit(sql, kundeId, monat): Promise<KiSichtbarkeit | null>` – Rate = genannte Antworten / ausgewertete Antworten; Lücke = Frage ohne eine einzige Nennung.
+  - `starteLauf(sql, websiteId: string, monat: string, anbieter: KiAnbieter[]): Promise<Lauf>` – legt den Lauf an oder setzt ihn fort (nur fehlende Kombinationen aus Frage × Anbieter × Wiederholung); prüft vor jeder Abfrage das Budget; pro Abfrage 1 Wiederholung bei 429/5xx nach 30 s; Endstatus `fertig`, `teilweise` (mindestens eine Abfrage fehlgeschlagen), `budget_erreicht` oder `fehler` (keine einzige Antwort).
+  - Job `ki-check-monat` am 25. um 03:00 für alle Websites aktiver Kunden mit mindestens einer aktiven Frage; danach `meldeStoerung` bei `teilweise`/`fehler`.
+  - `type KiSichtbarkeit = { monat: string; nennungsrate: Partial<Record<AnbieterId, number>>; gesamt: number | null; zitierrate: number | null; topBegriffe: { begriff: string; anzahl: number }[]; luecken: { frageId: string; text: string }[]; status: Lauf['status'] }`; `kiSichtbarkeit(sql, websiteId, monat): Promise<KiSichtbarkeit | null>` – Rate = genannte Antworten / ausgewertete Antworten; Lücke = Frage ohne eine einzige Nennung.
   - Bericht: `KiBerichtTeil.check` hat jetzt den Typ `KiSichtbarkeit` und wird gefüllt; der Aufbewahrungs-Job löscht `check_*`-Zeilen älter als 25 Monate; Text im Bericht: „Stichprobe mit Test-Fragen über die offiziellen Schnittstellen. Antworten in der App können abweichen.“
-  - `npm run ki-check:probe -- --kunde <id> --fragen 2 --wiederholungen 1` – echter Probelauf mit höchstens 2 Fragen.
+  - `npm run ki-check:probe -- --website <id> --fragen 2 --wiederholungen 1` – echter Probelauf mit höchstens 2 Fragen.
 - [ ] **Step 1: Failing tests** (nur `FakeAnbieter`): 2 Fragen × 3 Wiederholungen × 2 Anbieter = 12 Antworten; `fehlerBei: [5]` → Status `teilweise`, erneuter `starteLauf` fragt genau 1 nach → `fertig`; Budget so gesetzt, dass nach 4 Abfragen Schluss ist → 4 Antworten, Status `budget_erreicht`; 3 von 12 genannt → `gesamt === 0.25`; Frage ohne Nennung erscheint in `luecken`.
 - [ ] **Step 2:** FAIL → implementieren → PASS.
 - [ ] **Step 3:** Seite „KI-Check“: Monatstabelle Frage × Anbieter (genannt ja/nein, Position, zitiert), Top-Begriffe, Kosten des Laufs, Knopf „Lauf jetzt starten“ (nur Team, mit Kostenschätzung vorher).
@@ -170,7 +170,7 @@ docs/mcp-verbinden.md
 - Consumes: `pruefeToken`, `pruefeRate`, `mitKunde`, `mitTeam`, `listeKunden`, `listeWebsites`, `holeKennzahlen`, `vergleiche`, `crawlerUebersicht`, `kiSichtbarkeit`, `listeMassnahmen`, `vorherNachher`, `erzeugeBericht`, `app.suchbegriffe`.
 - Produces:
   - `POST /mcp` (Streamable HTTP, `@modelcontextprotocol/sdk`, zustandslos), Header `Authorization: Bearer wa_…`; ohne gültiges Token HTTP 401, Ratenlimit HTTP 429. Die unterstützte Protokollversion aus dem SDK in `docs/mcp-verbinden.md` notieren.
-  - Werkzeuge (Eingaben mit `zod`, alle Datumsangaben `YYYY-MM-DD` bzw. Monat `YYYY-MM`): `kunden_liste()`, `websites_liste({ kundeId? })`, `besucher_kennzahlen({ websiteId, von, bis, vergleichVon?, vergleichBis? })`, `ziele_konversionen({ websiteId, von, bis })`, `ki_sichtbarkeit({ websiteId, monat })` (Crawler + KI-Kanal + Check des Kunden), `suchbegriffe({ websiteId, monat })`, `massnahmen_logbuch({ websiteId })`, `bericht_erzeugen({ websiteId, monat })` (nur mit Recht `bericht_entwurf`; Ergebnis Status und Link zur Berichtsseite, nie Freigabe).
+  - Werkzeuge (Eingaben mit `zod`, alle Datumsangaben `YYYY-MM-DD` bzw. Monat `YYYY-MM`): `kunden_liste()`, `websites_liste({ kundeId? })`, `besucher_kennzahlen({ websiteId, von, bis, vergleichVon?, vergleichBis? })`, `ziele_konversionen({ websiteId, von, bis })`, `ki_sichtbarkeit({ websiteId, monat })` (Crawler + KI-Kanal + Check der Website), `suchbegriffe({ websiteId, monat })`, `massnahmen_logbuch({ websiteId })`, `bericht_erzeugen({ websiteId, monat })` (nur mit Recht `bericht_entwurf`; Ergebnis Status und Link zur Berichtsseite, nie Freigabe).
   - Jedes Werkzeug läuft in `mitKunde(token.kundeId)` bzw. `mitTeam` bei Team-Token; unbekannte oder fremde IDs → Fehler „Nicht gefunden.“; jede Ausgabe `{ schema: 'wa.mcp.v1', daten: … }`; jeder Aufruf in `mcp_protokoll` (ohne Eingabewerte).
   - Ressourcen: `wa://glossar` (Kennzahlen-Erklärungen). Prompts: `monatsanalyse`, `verbesserungs_vorschlaege` (Text, der die Werkzeuge nennt).
   - `docs/mcp-verbinden.md`: Einrichtung in Claude Code (`claude mcp add --transport http waybuild-analytics https://wa-app.169-58-147-249.sslip.io/mcp --header "Authorization: Bearer <Token>"`), Hinweis, dass Token nie in Chats gehören.

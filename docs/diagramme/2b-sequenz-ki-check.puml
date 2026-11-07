@@ -1,0 +1,47 @@
+@startuml sequenz-ki-check
+!include _stil.iuml
+title Sequenz b) Monatlicher KI-Check je Website
+autonumber "<b>0."
+
+participant "Zeitplaner\n(25., 03:00)" as C
+box "Waybuild Analytics (eigene App)" #F4FBFB
+participant "Arbeiter\n(Job ki-check)" as J
+participant "Budget-\nWächter" as BW
+participant "Regeln\n(Nennung, Zitat)" as RG
+database "Postgres" as P
+end box
+participant "KI-API mit Websuche\n(Anthropic, OpenAI;\nGoogle, Perplexity ab V2)" as KI
+participant "Auswertungsmodell\n(Claude Haiku)" as H
+participant "Monatsbericht\n(am 2.)" as BR
+
+C -> J : Lauf starten
+J -> P : Websites mit aktiven Test-Fragen
+loop je Website
+  loop je Frage × Anbieter × 3 Wiederholungen
+    J -> BW : Budget frei? (höchstens 10 € je Kunde und Monat)
+    alt Budget erreicht
+      BW --> J : nein → Lauf „Budget erreicht“, Ende
+    else frei
+      J -> KI : Test-Frage (Deutsch, Standort DE)
+      alt Fehler 429 / 5xx
+        KI --> J : Fehler → 1 Wiederholung nach 30 s,\nsonst „teilweise“
+      else Antwort
+        KI --> J : Antworttext + Quellen (URLs) + Kosten
+        J -> RG : Firma genannt? Position?\neigene Domain zitiert?
+        RG --> J : ja/nein, Rang, ja/nein
+        J -> H : Antwort als Daten → Begriffe,\nWettbewerber, Tonalität (festes Schema)
+        H --> J : Auswertung
+        J -> P : Antwort, Quellen, Auswertung, Kosten speichern
+      end
+    end
+  end
+end
+J -> P : Kennzahlen: Nennungsrate, Zitierrate,\nTop-Begriffe, Lücken
+...
+BR -> P : KI-Sichtbarkeit des Monats lesen
+note right of BR
+  Im Bericht steht: Stichprobe über die
+  offiziellen Schnittstellen; Antworten in
+  der App können abweichen.
+end note
+@enduml

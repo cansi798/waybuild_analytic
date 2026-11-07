@@ -1,0 +1,35 @@
+' Gemeinsamer Stil: Waybuild-Farben, deutsche Beschriftung
+skinparam defaultFontName "DejaVu Sans"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam roundCorner 10
+skinparam dpi 150
+skinparam backgroundColor #FFFFFF
+skinparam ArrowColor #006b68
+skinparam ArrowFontColor #1d2b2b
+skinparam TitleFontColor #006b68
+skinparam TitleFontSize 18
+skinparam NoteBackgroundColor #FFF8E1
+skinparam NoteBorderColor #C9A227
+skinparam actorBorderColor #006b68
+skinparam actorBackgroundColor #e6f6f5
+skinparam usecaseBorderColor #00a6a1
+skinparam usecaseBackgroundColor #e6f6f5
+skinparam rectangleBorderColor #006b68
+skinparam rectangleFontColor #006b68
+skinparam packageBorderColor #006b68
+skinparam participantBorderColor #006b68
+skinparam participantBackgroundColor #e6f6f5
+skinparam databaseBorderColor #006b68
+skinparam databaseBackgroundColor #e6f6f5
+skinparam sequenceLifeLineBorderColor #7fbfbc
+skinparam sequenceGroupBorderColor #006b68
+skinparam sequenceGroupHeaderFontColor #006b68
+skinparam sequenceBoxBorderColor #b9e3e1
+skinparam activityBorderColor #006b68
+skinparam activityBackgroundColor #e6f6f5
+skinparam activityDiamondBorderColor #006b68
+skinparam activityDiamondBackgroundColor #FFFFFF
+skinparam activityStartColor #006b68
+skinparam activityEndColor #006b68
+skinparam partitionBorderColor #00a6a1
